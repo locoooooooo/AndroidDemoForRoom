@@ -9,22 +9,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.SecureFlagPolicy
 import com.parcool.test.androiddemoforroom.ui.theme.AndroidDemoForRoomTheme
 import com.parcool.test.androiddemoforroom.ui.theme.Purple200
@@ -32,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
 
@@ -48,6 +43,9 @@ class MainActivity : ComponentActivity() {
                 val userStateList = remember {
                     mutableStateOf(listOf<User>())
                 }
+                val selectedIndex = remember {
+                    mutableStateOf(-1)
+                }
                 val insertAction: (User) -> Unit = {
                     MainScope().launch {
                         withContext(Dispatchers.IO) {
@@ -55,11 +53,8 @@ class MainActivity : ComponentActivity() {
                         }
                         queryAllData(userStateList)
                         Toast.makeText(this@MainActivity, "插入完成！", Toast.LENGTH_SHORT).show()
+                        selectedIndex.value = -1
                     }
-                }
-
-                val selectedIndex = remember {
-                    mutableStateOf(-1)
                 }
 
 
@@ -78,6 +73,7 @@ class MainActivity : ComponentActivity() {
                             //查询按钮
                             Button(onClick = {
                                 queryAllData(userStateList)
+                                selectedIndex.value = -1
                             }) {
                                 Text("查询")
                             }
@@ -90,6 +86,9 @@ class MainActivity : ComponentActivity() {
                                             val user = userStateList.value[selectedIndex.value]
                                             DbUtil.getUserDao(this@MainActivity).delete(user)
                                             queryAllData(userStateList)
+                                            selectedIndex.value = -1
+                                        } else {
+                                            Toast.makeText(this@MainActivity, "请选择一条数据", Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }
@@ -97,13 +96,14 @@ class MainActivity : ComponentActivity() {
                                 Text("删除选中")
                             }
                             Spacer(modifier = Modifier.width(10.dp))
-                            //清空数据按钮
+                            //删除全部按钮
                             Button(onClick = {
                                 MainScope().launch {
                                     withContext(Dispatchers.IO) {
                                         //Query
                                         DbUtil.getUserDao(this@MainActivity).deleteAll()
                                         queryAllData(userStateList)
+                                        selectedIndex.value = -1
                                     }
                                 }
                             }) {
@@ -240,7 +240,8 @@ fun UserList(stateWithData: MutableState<List<User>>, selectedIndex: MutableStat
                         .fillMaxWidth()
                         .requiredHeightIn(min = 32.dp)
                         .background(Color.LightGray),
-                    verticalAlignment = Alignment.CenterVertically) {
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(text = "firstName", modifier = Modifier.weight(1F))
                     Text(text = "lastName", modifier = Modifier.weight(2F))
                     Text(text = "nickName", modifier = Modifier.weight(2F))
